@@ -19,31 +19,66 @@ def generate_sql_query(question):
     model = genai.GenerativeModel("models/gemini-2.5-flash")
 
     prompt = f"""
-You are an advanced MySQL Text-to-SQL generator. Convert the user's English query 
-into a valid SQL SELECT query.
+    You are an advanced MySQL Text-to-SQL generator designed for highly accurate, 
+    schema-aligned SQL query generation. Your job is to convert the user's natural 
+    language question into the most precise SQL SELECT query possible.
 
-TABLE: students
-Columns:
-id, full_name, gender, academic_year, year_of_study, roll_number_with_degree,
-address, phone_number, state, pincode, department, hostel, day_scholar, 
-bus_traveller, sports_participation, paid_semesters, unpaid_semesters, 
-arrear_status, arrear_paper_names
 
-RULES:
-1. Output ONLY valid MySQL SELECT query.
-2. No markdown or ``` blocks.
-3. NEVER invent columns.
-4. Smart inference:
-   - "boys" = gender='Male'
-   - "girls" = gender='Female'
-   - "hostel students" = hostel='Hostel'
-   - "bus users" = bus_traveller='Bus User'
-   - "arrear students" = arrear_status='Yes'
-5. Use COUNT(), GROUP BY, etc. when needed.
-6. Return only 1 clean SQL query.
+    Columns:
+    id,
+    full_name,
+    gender,
+    academic_year,
+    year_of_study,
+    roll_number_with_degree,
+    address,
+    phone_number,
+    state,
+    pincode,
+    department,
+    hostel,
+    day_scholar,
+    bus_traveller,
+    sports_participation,
+    paid_semesters,
+    unpaid_semesters,
+    arrear_status,
+    arrear_paper_names
 
-User question: {question}
-"""
+
+    1. Output ONLY valid, executable MySQL SQL.
+    2. NEVER return markdown formatting (no ``` blocks).
+    3. NEVER explain your reasoning.
+    4. NEVER invent new table names or columns.
+    5. ALWAYS use existing column names exactly as written.
+    6. Assume user queries refer to this table unless stated otherwise.
+    7. Generate the BEST SQL for retrieval — prefer SELECT columns explicitly when possible.
+    8. If user asks for summaries (count, group, filter, sort), produce optimized SQL:
+   - Use COUNT(), GROUP BY, ORDER BY, LIKE, AND/OR when appropriate.
+    9. If user asks vague queries ("students in hostel"), infer the best column
+       and produce the correct SQL: 
+       hostel = 'Hostel'
+    10. When user input is incomplete, still produce the MOST reasonable SQL.
+    11. NEVER modify the user's intent.
+    12. ALWAYS ensure final output is a single clean SQL query.
+
+
+    User: "how many boys are in second year?"
+    → gender = 'Male', year_of_study = '2nd Year'
+    → SQL: SELECT COUNT(*) FROM students WHERE gender = 'Male' AND year_of_study = '2nd Year';
+
+    User: "show hostel girls in BCA"
+    → SQL: SELECT full_name, department, hostel FROM students 
+        WHERE gender = 'Female' AND department = 'BCA' AND hostel = 'Hostel';
+
+    User: "students who have unpaid semesters"
+    → SQL: SELECT * FROM students WHERE unpaid_semesters IS NOT NULL;
+
+
+    Return ONLY the SQL query and nothing else.
+
+    User question: {question}
+    """
 
     response = model.generate_content(prompt)
     return response.text.strip()
