@@ -97,7 +97,6 @@ This project enables:
 
 #### Results Page  2
 ![Result Page](https://github.com/user-attachments/assets/863cbc3e-b63b-4182-a953-c04dac0df04f)
-![SQL2](https://github.com/user-attachments/assets/863cbc3e-b63b-4182-a953-c04dac0df04f)
 
 
 ---
